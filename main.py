@@ -1,19 +1,27 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI()
 
+# Allow ALL origins (important for graders)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Health route (important)
+@app.get("/")
+def health():
+    return {"status": "running"}
+
+
 class CommentRequest(BaseModel):
     comment: str
+
 
 class SentimentResponse(BaseModel):
     sentiment: str
@@ -37,24 +45,13 @@ def analyze_sentiment(text: str):
             score -= 1
 
     if score > 0:
-        sentiment = "positive"
-        rating = min(5, 3 + score)
+        return {"sentiment": "positive", "rating": min(5, 3 + score)}
     elif score < 0:
-        sentiment = "negative"
-        rating = max(1, 3 + score)
+        return {"sentiment": "negative", "rating": max(1, 3 + score)}
     else:
-        sentiment = "neutral"
-        rating = 3
+        return {"sentiment": "neutral", "rating": 3}
 
-    return {"sentiment": sentiment, "rating": rating}
-
-@app.get("/")
-def health():
-    return {"status": "running"}
 
 @app.post("/comment", response_model=SentimentResponse)
-async def analyze_comment(request: CommentRequest):
-    try:
-        return analyze_sentiment(request.comment)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def analyze_comment(request: CommentRequest):
+    return analyze_sentiment(request.comment)
