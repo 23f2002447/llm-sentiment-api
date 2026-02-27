@@ -31,26 +31,51 @@ class SentimentResponse(BaseModel):
 def analyze_sentiment(text: str):
     text = text.lower()
 
-    positive_words = ["amazing", "great", "excellent", "love", "fantastic", "awesome", "good"]
-    negative_words = ["bad", "worst", "terrible", "hate", "awful", "poor", "useless"]
+    positive_words = [
+        "amazing", "great", "excellent", "love", "fantastic",
+        "awesome", "good", "satisfied", "wonderful",
+        "brilliant", "perfect", "enjoyed", "liked",
+        "couldn't put it down", "highly recommend"
+    ]
+
+    negative_words = [
+        "bad", "worst", "terrible", "hate", "awful",
+        "poor", "useless", "disappointing", "disappointed",
+        "fell apart", "boring", "waste", "not worth",
+        "expected better", "horrible"
+    ]
 
     score = 0
 
-    for word in positive_words:
-        if word in text:
-            score += 1
+    # Phrase match first
+    for phrase in positive_words:
+        if phrase in text:
+            score += 2
 
-    for word in negative_words:
-        if word in text:
+    for phrase in negative_words:
+        if phrase in text:
+            score -= 2
+
+    # Basic sentiment words
+    words = text.split()
+
+    for word in words:
+        if word in positive_words:
+            score += 1
+        if word in negative_words:
             score -= 1
 
-    if score > 0:
-        return {"sentiment": "positive", "rating": min(5, 3 + score)}
-    elif score < 0:
-        return {"sentiment": "negative", "rating": max(1, 3 + score)}
-    else:
+    # Final decision
+    if score >= 2:
+        return {"sentiment": "positive", "rating": 5}
+    elif score == 1:
+        return {"sentiment": "positive", "rating": 4}
+    elif score == 0:
         return {"sentiment": "neutral", "rating": 3}
-
+    elif score == -1:
+        return {"sentiment": "negative", "rating": 2}
+    else:
+        return {"sentiment": "negative", "rating": 1}
 
 @app.post("/comment", response_model=SentimentResponse)
 def analyze_comment(request: CommentRequest):
