@@ -39,6 +39,9 @@ def analyze_sentiment(text: str):
 
     return {"sentiment": sentiment, "rating": rating}
 
+@app.get("/")
+def health():
+    return {"status": "running"}
 
 @app.post("/comment", response_model=SentimentResponse)
 async def analyze_comment(request: CommentRequest):
